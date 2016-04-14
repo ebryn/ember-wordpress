@@ -13,14 +13,26 @@ export default DS.RESTSerializer.extend({
 		return this._super(store, primaryModelClass, payloadTemp, id, requestType);
 	},
 
+	normalizeFindRecordResponse(store, primaryModelClass, payload, id, requestType) {
+		if (primaryModelClass.modelName === 'user') {
+			if (!payload.links) { payload.links = {}; }
+			let adapter = store.adapterFor(primaryModelClass.modelName);
+			let postQueryUrl = adapter.urlForQuery({author: payload.id}, 'post');
+			payload.links.posts = `${postQueryUrl}?author=${payload.id}`;
+		}
+
+		return this._super(...arguments);
+	},
+
 	// Then, we can deal with our missing root element when extracting arrays from the JSON.
 	normalizeArrayResponse(store, primaryModelClass, payload, id, requestType) {
-		const payloadTemp = {};
+		const newPayload = {};
 		const rootKey = Ember.String.pluralize(primaryModelClass.modelName);
 
-		payloadTemp[rootKey] = payload;
+		newPayload[rootKey] = payload.data;
+		newPayload.meta = payload.meta;
 
-		return this._super(store, primaryModelClass, payloadTemp, id, requestType);
+		return this._super(store, primaryModelClass, newPayload, id, requestType);
 	},
 
 	normalize(modelClass, resourceHash, prop) {
