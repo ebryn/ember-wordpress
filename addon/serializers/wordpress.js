@@ -37,15 +37,24 @@ export default DS.RESTSerializer.extend({
 
 	normalize(modelClass, resourceHash, prop) {
 		// As you get bored typing `title.rendered`, here we move the `rendered` part up.
-		if (resourceHash.content && resourceHash.title.rendered) {
-			resourceHash.content = resourceHash.content.rendered;
-			resourceHash.title = resourceHash.title.rendered;
+		for (let key in resourceHash) {
+			if (!resourceHash.hasOwnProperty(key)) { continue; }
+			let value = resourceHash[key];
+			// unnest `rendered` properties
+			if (Ember.typeOf(value) === 'object' && 'rendered' in value) {
+				resourceHash[key] = value.rendered;
+			} else {
+				resourceHash[key.camelize()] = value;
+			}
 		}
-		if (resourceHash.title && resourceHash.title.rendered) {
-			resourceHash.title = resourceHash.title.rendered;
-		}
-		if (resourceHash.excerpt && resourceHash.excerpt.rendered) {
-			resourceHash.excerpt = resourceHash.excerpt.rendered;
+
+		let originalLinks = resourceHash._links;
+		if (originalLinks) {
+			let newLinks = resourceHash.links = resourceHash.links || {};
+			for (let key in originalLinks) {
+				if (!originalLinks.hasOwnProperty(key)) { continue; }
+				newLinks[key] = originalLinks[key][0].href;
+			}
 		}
 		return this._super(modelClass, resourceHash, prop);
 	}
