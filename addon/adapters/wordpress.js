@@ -1,3 +1,4 @@
+import Ember from 'ember';
 import DS from 'ember-data';
 import config from 'ember-get-config';
 
@@ -21,7 +22,7 @@ export default DS.RESTAdapter.extend({
 			newPayload = {
 				data: payload,
 				meta: meta
-			}
+			};
 		}
 		return this._super(status, headers, newPayload, requestData);
 	}
